@@ -52,6 +52,5 @@ int main() {
     vector<string> mCode;
     readMaliciousCode("mcode.txt", mCode);
 
-    asdjks
     return 0;
 }
