@@ -187,12 +187,153 @@ void substringSubsequence(string t1,  string t2, string t3, vector<string> mCode
         substring(t3, mCode[i], 3, file);
 
         subsequence(t1, t2, t3, mCode[i], file);
+    }
+    file << "======================================" << endl;
+}
 
-        //file << "La subsecuancia mas encontrada fue AABBCC 5 veces en transmission 1.txt" << endl;
-        //file << "-----------------" << endl;
+string substringFromTransmissions(string string1, string string2) {
+    int max = 0; // El tamanio del LCS encontrado
+    int coord;
 
+    //Creamos e inicializamos la matriz
+    vector<vector<int>> mat;
+    for(int i = 0; i <= string1.length(); i++){
+        vector<int> aux(string2.length() + 1, 1);   
+        mat.push_back(aux); 
     }
 
+    //Llenamos la columna de comparacion del primer valor del string 2 con todos los valores del uno, es decir la columna mat[i][0]
+    for(int i = 0; i < string1.length(); i++){
+        if(string2[0] == string1[i]){
+            mat[i][0] = 1;
+            max = 1;
+        } else {
+            mat[i][0] = 0;
+        }
+    }
+
+    //Ahora recorremos el primer renglon, comparando el primer valor del string 1 con todos los del string dos, sera el renglon mat[0][i]
+    for(int i = 0; i < string2.length(); i++){
+        if(string1[0] == string2[i]){
+            mat[0][i] = 1;
+            max = 1;
+        } else {
+            mat[0][i] = 0;
+        }
+    }
+
+    //Recorremos el resto de la matriz con un doble for
+    int aux; //Lo usamos para almacenar el valor que se agrega a una celda y compararlo con el max
+    for(int i = 1; i < string1.length(); i++){
+        for(int j = 1; j < string2.length(); j++){
+            if(string1[i] == string2[j]){
+                //El caracter en la posicion i en el string1 es igual al caracter j en el string 2
+                aux = mat[i - 1][j - 1] + 1;
+                mat[i][j] = aux;
+                if(max < aux){
+                    max = aux;
+                    coord = i;
+                }
+            } else {
+                //Son diferentes los caracteres de los strings en la posicion i y j
+                mat[i][j] = 0;
+            }
+        }
+    }
+
+    //En coord tenemos guardada la posicion en donde termina el substring mas largo
+    //Y en max tenemos el tamanio del substring. Entonces si los restamos tenemos el
+    //Indice donde empieza el substring. 
+
+    int startSub = coord - max + 1;
+    return string1.substr(startSub, max); //Obtenemos el substring
+}
+
+void findSubstrings(string t1, string t2, string t3, ofstream &file){
+    file << "Los substrings mas largos son:" << endl;
+    file << "T1-T2 ==> " << substringFromTransmissions(t1, t2) << endl;
+    file << "T1-T3 ==> " << substringFromTransmissions(t1, t3) << endl;
+    file << "T2-T3 ==> " << substringFromTransmissions(t2, t3) << endl;
+}
+
+void manacher(string texto, int numarch, ofstream &file){
+	string T = "";
+    int posicionInicial = 0;
+	int n = texto.length();
+	for (int i=0; i<n; i++){
+		T += "|";
+		T += texto[i];
+	}
+	T += "|";
+	n = T.length();
+	vector<int> L(n);
+	L[0] = 0;
+	L[1] = 1;
+	int maxLong=0, maxCentro=0;
+	bool exp;
+	for (int c=1, li=0, ri=2; ri<n; ri++){
+		li = c-(ri-c);
+		exp = false;
+		if (c-maxLong <= ri && ri >= c+maxLong){
+			if (L[li] < (c+L[c]-ri)){
+				L[ri] = L[li];
+			}
+			else if(L[li] == (c + L[c]) - ri && (c + L[c]) == 2*n){
+				L[ri] = L[li];
+			}
+			else if(L[li] == (c + L[c]) - ri && (c + L[c]) < 2*n){
+				L[ri] = L[li];
+				exp = true;
+			}
+			else if(L[li] > (c + L[c]) - ri && (c + L[c]) < 2*n){
+				L[ri] = (c+L[c]) - ri;
+				exp = true;
+			}
+		}
+		else{
+			L[ri] = 0;
+			exp = true;
+		}
+		if (exp){
+			while((ri + L[ri] < n) && (ri - L[ri] > 0) && (T[ri - L[ri] - 1] == T[ri + L[ri] + 1])){
+				L[ri]++;
+			}
+		}
+		c = ri;
+		if (L[ri] > maxLong){
+	    	maxLong = L[ri];
+	    	maxCentro = ri;
+	    }
+	}
+	int inicio = (maxCentro - maxLong) / 2;
+	string salida = "";
+	for (int i=inicio; i<(inicio+maxLong); i++){
+		salida+=texto[i];
+    if(i == inicio){
+      posicionInicial = i;
+    }
+	}
+
+  if(numarch == 1){
+    file << "Transmission1.txt ==> Posición: " << posicionInicial + 1 << endl;
+    file << salida << endl;
+  }else if(numarch == 2){
+    file << "Transmission2.txt ==> Posición: " << posicionInicial + 1 << endl;
+    file << salida << endl;
+  }else if(numarch == 3){
+    file << "Transmission3.txt ==> Posición: " << posicionInicial + 1 << endl;
+    file << salida << endl;
+  }
+}
+
+void palindromos(string t1, string t2, string t3, ofstream &file) {
+    file << "Palíndromo más grande:" << endl;
+    manacher(t1, 1, file);
+    file << "------------" << endl;
+    manacher(t2, 2, file);
+    file << "------------" << endl;
+    manacher(t3, 3, file);
+    file << "===================================" << endl;
 }
 
 int main() {
@@ -209,6 +350,10 @@ int main() {
     ofstream file("checking.txt"); //Abrimos el archivo
 
     substringSubsequence(t1, t2, t3, mCode, file);
+    palindromos(t1, t2, t3, file);
+    findSubstrings(t1, t2, t3, file);
+
+    //cout << substringFromTransmissions("abcdefgh", "efghijkl");
 
     file.close(); //Cerramos el archivo
 
